@@ -9,7 +9,7 @@ class Flow {
 
   }
 
-  submitHandler() {
+  async submitHandler() {
     // 1. Lock form
     document.querySelectorAll('textarea, #submit').forEach(function(el) {
       el.setAttribute('disabled', 'disabled');
@@ -20,18 +20,84 @@ class Flow {
     loader.classList.add('loader');
     document.querySelector('.right').appendChild(loader);
 
-    // 3. Parse form
-    let FD = this.createForm();
+    // 3. Perform 3DS Method
+    try {
+      var trxId = await this.preauthCall();
+      console.log(trxId);
+    } catch(e) {
+      if (e instanceof SyntaxError) {
+        console.log("Invalid input JSON");
+      } else {
+        console.log(e);
+      }
+      this.reset();
+      return
+    }
 
-    // 4. Submit form
+    // 4. Parse form
+    let FD = this.createForm(trxId);
+
+    // 5. Submit form
     this.submitFormData(FD);
 
-    // 5. Wait for response
+    // 6. Wait for response
     // in responseCallback
 
-    // 6. Create challenge iframe
+    // 7. Create challenge iframe
 
-    // 7. Poll for challenge completion
+    // 8. Poll for challenge completion
+  }
+
+  preauthCall() {
+    return new Promise(function(resolve, reject) {
+      let input = document.getElementById('input').value;
+      try {
+        var obj = JSON.parse(input);
+      } catch(e) {
+        reject('Invalid JSON input');
+      }
+
+      if (!obj.hasOwnProperty('acctNumber')) {
+        reject('Missing acctNumber');
+      }
+
+      let req = JSON.stringify({
+        "acctNumber": obj.acctNumber
+      });
+
+      let FD = new FormData();
+      FD.append('input', req);
+
+      let XHR = new XMLHttpRequest();
+
+      XHR.addEventListener('load', function(e) {
+        if (XHR.status != 200) {
+          console.log("Return code " + XHR.status);
+        }
+
+        let preauth;
+
+        try {
+          preauth = JSON.parse(XHR.responseText);
+        } catch(e) {
+          reject(e);
+        }
+
+        resolve(preauth.threeDSServerTransID);
+      });
+
+      XHR.addEventListener('error', function(e) {
+        reject("Request failed");
+      });
+
+      XHR.addEventListener('timeout', function(e) {
+        reject("Request timed out");
+      });
+
+      XHR.open('POST', "/3dsmethod");
+
+      XHR.send(FD);
+    });
   }
 
   prettyJSON(input) {
@@ -53,7 +119,13 @@ class Flow {
 
   responseCallback(data) {
     // TODO: Catch error
-    let obj = JSON.parse(data)
+    try {
+      var obj = JSON.parse(data)
+    } catch (e) {
+      console.log("Invalid JSON received");
+      this.reset();
+      return
+    }
 
     if (!obj.hasOwnProperty('messageType')) {
       console.log("Invalid object received");
@@ -74,11 +146,15 @@ class Flow {
     this.reset();
   }
 
-  createForm() {
+  createForm(trxID) {
     let input = document.getElementById('input').value;
 
+    let obj = JSON.parse(input);
+    obj.threeDSServerTransID = trxID;
+    let asString = JSON.stringify(obj);
     let FD = new FormData();
-    FD.append('input', input)
+
+    FD.append('input', asString)
 
     return FD
   }

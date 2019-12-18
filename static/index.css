@@ -9,7 +9,7 @@ main {
   margin: 0px auto;
   border-left: 1px solid #777;
   border-right: 1px solid #777;
-  box-shadow: 0px 0px 8px #111;
+  box-shadow: 0px 0px 10px #AAA;
 
   min-width: 800px;
   max-width: 1400px;
