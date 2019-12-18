@@ -1,6 +1,7 @@
 class Flow {
   constructor(submitBtn) {
     this.btn = submitBtn;
+    this.displayBox = document.querySelector('.right');
     let self = this;
 
     submitBtn.addEventListener('click', function() {
@@ -9,54 +10,88 @@ class Flow {
 
   }
 
+  displayError(msg) {
+    let div = document.createElement('div');
+    div.classList.add('error');
+    let text = document.createTextNode(msg);
+    div.appendChild(text);
+
+    while (this.displayBox.firstChild) {
+      this.displayBox.removeChild(this.displayBox.firstChild);
+    }
+
+    this.displayBox.appendChild(div);
+  }
+
+  displayJSON(msg) {
+    div.appendChild(text);
+  }
+
   async submitHandler() {
+    // 0. Reset display element.
+    while (this.displayBox.firstChild) {
+      this.displayBox.removeChild(this.displayBox.firstChild);
+    }
+
     // 1. Lock form
     document.querySelectorAll('textarea, #submit').forEach(function(el) {
       el.setAttribute('disabled', 'disabled');
     });
 
-    // 2. Add spinner
+    // 2. Add spinner to indicate loading
     let loader = document.createElement('div');
     loader.classList.add('loader');
     document.querySelector('.right').appendChild(loader);
 
-    // 3. Perform 3DS Method
+    // 3. Parse the input early, complain if not JSON.
+    let input = document.getElementById('input').value;
     try {
-      var trxId = await this.preauthCall();
-      console.log(trxId);
+      var obj = JSON.parse(input);
     } catch(e) {
-      if (e instanceof SyntaxError) {
-        console.log("Invalid input JSON");
+      // TODO: Display error
+      this.displayError("Invalid JSON: " + e.message);
+      this.reset();
+      return;
+    }
+
+    try {
+      // 4. Perform 3DS Method
+      var trxId = await this.preauthCall(obj);
+
+      // 5. Parse form
+      let FD = this.createForm(trxId, obj);
+
+      // 6. Submit form
+      let response = await this.submitFormData(FD);
+
+      // 7. Handle response
+      let parsed = this.parseAuthResponse(response);
+      document.querySelector('.right').appendChild(this.prettyJSON(parsed));
+
+      // 8. Create challenge iframe
+
+      // 9. Poll for challenge completion
+      this.reset();
+    } catch(e) {
+      if (typeof(e) === "string") {
+        this.displayError(e);
       } else {
-        console.log(e);
+        // Object? SyntaxError?
+        if (e.hasOwnProperty('message')) {
+          this.displayError(e.message);
+        } else {
+          this.displayError(e);
+          console.log(e);
+        }
       }
+
       this.reset();
       return
     }
-
-    // 4. Parse form
-    let FD = this.createForm(trxId);
-
-    // 5. Submit form
-    this.submitFormData(FD);
-
-    // 6. Wait for response
-    // in responseCallback
-
-    // 7. Create challenge iframe
-
-    // 8. Poll for challenge completion
   }
 
-  preauthCall() {
+  preauthCall(obj) {
     return new Promise(function(resolve, reject) {
-      let input = document.getElementById('input').value;
-      try {
-        var obj = JSON.parse(input);
-      } catch(e) {
-        reject('Invalid JSON input');
-      }
-
       if (!obj.hasOwnProperty('acctNumber')) {
         reject('Missing acctNumber');
       }
@@ -117,39 +152,21 @@ class Flow {
     return pre;
   }
 
-  responseCallback(data) {
-    // TODO: Catch error
+  parseAuthResponse(data) {
     try {
       var obj = JSON.parse(data)
     } catch (e) {
-      console.log("Invalid JSON received");
-      this.reset();
-      return
+      throw new Error("Invalid JSON received: " + e.message);
     }
 
     if (!obj.hasOwnProperty('messageType')) {
-      console.log("Invalid object received");
-      this.reset();
-      return
+      throw new Error("Invalid object received, no messageType key");
     }
 
-    if (obj.messageType == "Erro") {
-      // TODO: Display error
-      console.log(obj.errorDetail);
-      document.querySelector('.right').appendChild(this.prettyJSON(obj));
-      this.reset();
-      return
-    }
-
-    // TODO: Remove this?
-    document.querySelector('.right').appendChild(this.prettyJSON(obj));
-    this.reset();
+    return obj;
   }
 
-  createForm(trxID) {
-    let input = document.getElementById('input').value;
-
-    let obj = JSON.parse(input);
+  createForm(trxID, obj) {
     obj.threeDSServerTransID = trxID;
     let asString = JSON.stringify(obj);
     let FD = new FormData();
@@ -160,40 +177,41 @@ class Flow {
   }
 
   submitFormData(FD) {
-    let XHR = new XMLHttpRequest();
     let self = this;
+    return new Promise(function(resolve, reject) {
+      let XHR = new XMLHttpRequest();
 
-    XHR.addEventListener('load', function(e) {
-      if (XHR.status != 200) {
-        console.log("Return code " + XHR.status);
-        self.reset();
-      }
+      XHR.addEventListener('load', function(e) {
+        if (XHR.status != 200) {
+          reject(new Error("Invalid response code " + XHR.status + ": " + XHR.responseText));
+        }
 
-      self.responseCallback(XHR.responseText);
+        resolve(XHR.responseText);
+      });
+
+      XHR.addEventListener('error', function(e) {
+        reject(e);
+      });
+
+      XHR.addEventListener('timeout', function(e) {
+        reject(e);
+      });
+
+      XHR.open('POST', "/submit");
+
+      XHR.send(FD);
     });
-
-    XHR.addEventListener('error', function(e) {
-      console.log("Request failed");
-      self.reset();
-    });
-
-    XHR.addEventListener('timeout', function(e) {
-      console.log("Request timed out");
-      self.reset();
-    });
-
-    XHR.open('POST', "/submit");
-
-    XHR.send(FD);
   }
 
   reset() {
-    console.log("Resetting form");
     document.querySelectorAll('textarea, #submit').forEach(function(el) {
       el.removeAttribute('disabled');
     });
 
-    document.querySelector('.loader').remove();
+    let loader = document.querySelector('.loader')
+    if (loader) {
+      loader.remove();
+    }
   }
 }
 
