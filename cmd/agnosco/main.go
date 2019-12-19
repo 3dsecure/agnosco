@@ -22,14 +22,14 @@ var (
 type APIMethod int
 
 const (
-	// PreAuth is the /preauth 3dsecure.io API method
-	PreAuth APIMethod = iota
+	// MethodPreAuth is the /preauth 3dsecure.io API method
+	MethodPreAuth APIMethod = iota
 
-	// Auth is the /preauth 3dsecure.io API method
-	Auth
+	// MethodAuth is the /preauth 3dsecure.io API method
+	MethodAuth
 
-	// PostAuth is the /preauth 3dsecure.io API method
-	PostAuth
+	// MethodPostAuth is the /preauth 3dsecure.io API method
+	MethodPostAuth
 )
 
 func main() {
@@ -64,7 +64,7 @@ func threeDSMethodHandler(ctx *gin.Context) {
 		ctx.Status(http.StatusBadRequest)
 	}
 
-	body, e := apiCall(PreAuth, input)
+	body, e := apiCall(MethodPreAuth, input)
 	if e != nil {
 		ctx.String(http.StatusInternalServerError, e.Error())
 	} else {
@@ -78,7 +78,7 @@ func submitHandler(ctx *gin.Context) {
 		ctx.Status(http.StatusBadRequest)
 	}
 
-	body, e := apiCall(Auth, input)
+	body, e := apiCall(MethodAuth, input)
 	if e != nil {
 		ctx.String(http.StatusInternalServerError, e.Error())
 	} else {
@@ -94,11 +94,11 @@ func edssURL(method APIMethod) (base string) {
 	}
 
 	switch method {
-	case PreAuth:
+	case MethodPreAuth:
 		base += "/preauth"
-	case Auth:
+	case MethodAuth:
 		base += "/auth"
-	case PostAuth:
+	case MethodPostAuth:
 		base += "/postauth"
 	}
 

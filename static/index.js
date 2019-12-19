@@ -1,3 +1,12 @@
+class XHRError extends Error {
+  constructor(message, details) {
+    super(message);
+
+    this.name = 'XHRError';
+    this.details = details;
+  }
+}
+
 class Flow {
   constructor(submitBtn) {
     this.btn = submitBtn;
@@ -8,6 +17,33 @@ class Flow {
       self.submitHandler()
     });
 
+  }
+
+  clearMessages() {
+    while (this.displayBox.firstChild) {
+      this.displayBox.removeChild(this.displayBox.firstChild);
+    }
+  }
+
+  setError(message, details) {
+    let container = document.createElement('div');
+    container.classList.add('errorcontainer');
+
+    let messageDiv = document.createElement('div');
+    messageDiv.classList.add('errormessage');
+    let messageNode = document.createTextNode(message);
+    messageDiv.appendChild(messageNode);
+
+    let detailsDiv = document.createElement('div')
+    detailsDiv.classList.add('errordetails');
+    let detailsNode = document.createTextNode(details);
+    detailsDiv.appendChild(detailsNode);
+
+    container.appendChild(messageDiv);
+    container.appendChild(detailsDiv);
+
+    this.clearMessages();
+    this.displayBox.appendChild(container);
   }
 
   /*
@@ -122,6 +158,8 @@ class Flow {
     } catch(e) {
       if (typeof e === "string") {
         this.displayError(e);
+      } else if (e instanceof XHRError) {
+        this.setError(e.message, e.details);
       } else {
         // Object? SyntaxError?
         if (e.hasOwnProperty('message')) {
@@ -141,6 +179,7 @@ class Flow {
     return new Promise(function(resolve, reject) {
       if (!obj.hasOwnProperty('acctNumber')) {
         reject('Missing acctNumber');
+        return
       }
 
       let req = JSON.stringify({
@@ -154,7 +193,10 @@ class Flow {
 
       XHR.addEventListener('load', function(e) {
         if (XHR.status != 200) {
-          console.log("Return code " + XHR.status);
+          reject(
+            new XHRError("Return code " + XHR.status, XHR.responseText)
+          );
+          return
         }
 
         let preauth;
@@ -163,17 +205,21 @@ class Flow {
           preauth = JSON.parse(XHR.responseText);
         } catch(e) {
           reject(e);
+          return
         }
 
         resolve(preauth.threeDSServerTransID);
+        return
       });
 
       XHR.addEventListener('error', function(e) {
         reject("Request failed");
+        return
       });
 
       XHR.addEventListener('timeout', function(e) {
         reject("Request timed out");
+        return
       });
 
       XHR.open('POST', "/3dsmethod");
@@ -231,17 +277,21 @@ class Flow {
       XHR.addEventListener('load', function(e) {
         if (XHR.status != 200) {
           reject(new Error("Invalid response code " + XHR.status + ": " + XHR.responseText));
+          return
         }
 
         resolve(XHR.responseText);
+        return
       });
 
       XHR.addEventListener('error', function(e) {
         reject(e);
+        return
       });
 
       XHR.addEventListener('timeout', function(e) {
         reject(e);
+        return
       });
 
       XHR.open('POST', "/submit");

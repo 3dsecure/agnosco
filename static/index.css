@@ -64,7 +64,13 @@ label {
 }
 
 .right {
+  display: flex;
+  justify-content: center;
   flex-grow: 1;
+}
+
+.right > iframe {
+  margin-top: 30px;
 }
 
 #input {
@@ -130,4 +136,34 @@ form > button {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.errorcontainer {
+  margin-top: 100px;
+  width: 100%;
+  padding: 0;
+}
+
+.errormessage, .errorcontainer {
+  display: block;
+  width: 400px;
+  box-sizing: border-box;
+}
+
+.errormessage {
+  border-radius: 14px 14px 0px 0px;
+  background-color: #f5c6cb;
+  padding: 12px;
+  color: #721c24;
+  font: bold 1.2em "Montserrat", sans-serif;
+}
+
+.errordetails {
+  line-height: 1.6em;
+  padding: 12px;
+  color: #721c24;
+  background-color: #f8d7da;
+  min-height: 150px;
+  font-size: 1.2em;
+  border-radius: 0px 0px 14px 14px;
 }
