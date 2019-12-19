@@ -10,6 +10,45 @@ class Flow {
 
   }
 
+  /*
+    SdkTransID string
+    NotificationURL  string
+    ACSURL           string
+  */
+  buildCReq(ares) {
+    let creq = {
+      notificationURL: "http://localhost:8270/missing",
+      threeDSServerTransID: ares.threeDSServerTransID,
+      acsTransID: ares.acsTransID,
+      dsTransID: ares.dsTransID,
+      messageVersion: ares.messageVersion,
+      messageType: "CReq",
+      challengeWindowSize: "01"
+    };
+
+    return JSON.stringify(creq);
+  }
+
+  postCReq(url, creq) {
+    let iframe = document.createElement('iframe');
+    iframe.setAttribute('width', '250');
+    iframe.setAttribute('height', '400');
+    iframe.name = "challenge";
+
+    this.displayBox.appendChild(iframe);
+
+    let form = document.getElementById('challengeForm');
+    let creqInput = document.getElementById('creq');
+    creqInput.value = btoa(creq);
+
+    form.action = url;
+    form.target = 'challenge';
+    form.method = 'post';
+    form.submit();
+
+    //return this.doPost(url, FD);
+  }
+
   displayError(msg) {
     let div = document.createElement('div');
     div.classList.add('error');
@@ -66,14 +105,22 @@ class Flow {
 
       // 7. Handle response
       let parsed = this.parseAuthResponse(response);
-      document.querySelector('.right').appendChild(this.prettyJSON(parsed));
+      if (!parsed.hasOwnProperty('transStatus') || parsed.transStatus != "C") {
+        this.reset();
+        document.querySelector('.right')
+          .appendChild(this.prettyJSON(parsed));
+        return;
+      }
 
       // 8. Create challenge iframe
+      let creq = this.buildCReq(parsed);
+
+      let rreq = this.postCReq(parsed.acsURL, creq);
 
       // 9. Poll for challenge completion
       this.reset();
     } catch(e) {
-      if (typeof(e) === "string") {
+      if (typeof e === "string") {
         this.displayError(e);
       } else {
         // Object? SyntaxError?
