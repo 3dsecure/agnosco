@@ -348,7 +348,6 @@ class Flow {
     await this.sleep(1000);
 
     for (let i = 1000; i < 10000; i += 1000) {
-      console.log(i);
       let resp = await this.pollFor3DSMethodCompletion(threeDSServerTransID);
       if (resp == "true") {
         return "Y";
