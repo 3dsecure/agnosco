@@ -6,8 +6,11 @@ import (
 
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -19,7 +22,14 @@ var (
 	apiKey = kingpin.Flag("apikey", "3dsecure.io API key").Short('k').String()
 
 	env = kingpin.Flag("env", "3dsecure.io environment to use").Short('e').Default("sandbox").String()
+
+	threeDSMethodMap = sync.Map{}
 )
+
+type threeDSMethodCompletion struct {
+	ThreeDSServerTransID string
+	Time                 time.Time
+}
 
 // APIMethod represents the possible API methods for 3dsecure.io
 type APIMethod int
@@ -50,8 +60,13 @@ func main() {
 
 	router.GET("/", indexHandler)
 	router.POST("/submit", submitHandler)
-	router.POST("/3dsmethod", threeDSMethodHandler)
-	router.POST("/endchallenge", challengeEndHandler)
+
+	router.POST("/preauth", preauthMethodHandler)
+
+	router.GET("/3dsmethod/wait", threeDSMethodWaitHandler)
+	router.POST("/3dsmethod/end", threeDSMethodEndHandler)
+
+	router.POST("/challenge/end", challengeEndHandler)
 
 	address := fmt.Sprintf("localhost:%d", *port)
 	fmt.Printf("Connect to http://%s\n", address)
@@ -64,7 +79,7 @@ func indexHandler(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "index.tmpl", nil)
 }
 
-func threeDSMethodHandler(ctx *gin.Context) {
+func preauthMethodHandler(ctx *gin.Context) {
 	input, ok := ctx.GetPostForm("input")
 	if !ok {
 		ctx.Status(http.StatusBadRequest)
@@ -77,6 +92,51 @@ func threeDSMethodHandler(ctx *gin.Context) {
 	} else {
 		ctx.String(http.StatusOK, body)
 	}
+}
+
+func threeDSMethodWaitHandler(ctx *gin.Context) {
+	threeDSServerTransID, _ := ctx.GetQuery("threeDSServerTransID")
+	if threeDSServerTransID == "" {
+		log.Println("Missing threeDSServerTransID in request")
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	_, ok := threeDSMethodMap.Load(threeDSServerTransID)
+	if !ok {
+		ctx.String(http.StatusOK, "false")
+	} else {
+		ctx.String(http.StatusOK, "true")
+	}
+}
+
+func threeDSMethodEndHandler(ctx *gin.Context) {
+	input, ok := ctx.GetPostForm("threeDSMethodData")
+	if !ok {
+		log.Println("Invalid request, form key threeDSMethodData not present")
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	inputJSON, e := base64.RawURLEncoding.DecodeString(strings.TrimRight(input, "="))
+	if e != nil {
+		log.Printf("Invalid threeDSMethodData: %s", e.Error())
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	data := struct {
+		ThreeDSServerTransID string `json:"threeDSServerTransID"`
+	}{}
+
+	json.Unmarshal(inputJSON, &data)
+
+	compInd := threeDSMethodCompletion{
+		data.ThreeDSServerTransID,
+		time.Now(),
+	}
+
+	threeDSMethodMap.Store(data.ThreeDSServerTransID, compInd)
 }
 
 func submitHandler(ctx *gin.Context) {
@@ -105,7 +165,7 @@ func challengeEndHandler(ctx *gin.Context) {
 		return
 	}
 
-	cresJSON, e := base64.RawURLEncoding.DecodeString(cresB64)
+	cresJSON, e := base64.RawURLEncoding.DecodeString(strings.TrimRight(cresB64, "="))
 	if e != nil {
 		ctx.String(http.StatusBadRequest, "Invalid cres Base64 %s", e.Error())
 		return

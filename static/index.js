@@ -1,3 +1,12 @@
+/*
+ * TODO:
+ *  - Set threeDSCompInd
+ *  - Set notificationURL
+ *  - Progress checklist
+ *  - Error styling
+ *  - Challenge window styling
+ */
+
 class XHRError extends Error {
   constructor(message, details) {
     super(message);
@@ -17,6 +26,88 @@ class Flow {
       self.submitHandler()
     });
 
+  }
+
+  async submitHandler() {
+    // 0. Reset display element.
+    while (this.displayBox.firstChild) {
+      this.displayBox.removeChild(this.displayBox.firstChild);
+    }
+
+    // 1. Lock form
+    document.querySelectorAll('textarea, #submit').forEach(function(el) {
+      el.setAttribute('disabled', 'disabled');
+    });
+
+    // 2. Add spinner to indicate loading
+    let loader = document.createElement('div');
+    loader.classList.add('loader');
+    document.querySelector('.right').appendChild(loader);
+
+    // 3. Parse the input early, complain if not JSON.
+    let input = document.getElementById('input').value;
+    try {
+      var obj = JSON.parse(input);
+    } catch(e) {
+      // TODO: Display error
+      this.displayError("Invalid JSON: " + e.message);
+      this.reset();
+      return;
+    }
+
+    try {
+      // 4. Perform 3DS Method
+      let carddata = await this.preauthCall(obj);
+      let trxId = carddata.threeDSServerTransID;
+
+      let threeDSCompInd = "U";
+      if (carddata.hasOwnProperty('threeDSMethodURL')) {
+        this.do3DSMethod(trxId, carddata.threeDSMethodURL);
+
+        // Wait for threeDSMethodNotificationURL to be called.
+        threeDSCompInd = await this.waitFor3DSMethod(trxId);
+      }
+
+      // 5. Parse form
+      let FD = this.createForm(trxId, threeDSCompInd, obj);
+
+      // 6. Submit form
+      let response = await this.submitFormData(FD);
+
+      // 7. Handle response
+      let parsed = this.parseAuthResponse(response);
+      if (!parsed.hasOwnProperty('transStatus') || parsed.transStatus != "C") {
+        this.reset();
+        document.querySelector('.right')
+          .appendChild(this.prettyJSON(parsed));
+        return;
+      }
+
+      // 8. Create challenge iframe
+      let creq = this.buildCReq(parsed);
+
+      let rreq = this.postCReq(parsed.acsURL, creq);
+
+      // 9. Poll for challenge completion
+      this.reset();
+    } catch(e) {
+      if (typeof e === "string") {
+        this.displayError(e);
+      } else if (e instanceof XHRError) {
+        this.setError(e.message, e.details);
+      } else {
+        // Object? SyntaxError?
+        if (e.hasOwnProperty('message')) {
+          this.displayError(e.message);
+        } else {
+          this.displayError(e);
+          console.log(e);
+        }
+      }
+
+      this.reset();
+      return
+    }
   }
 
   clearMessages() {
@@ -102,79 +193,6 @@ class Flow {
     div.appendChild(text);
   }
 
-  async submitHandler() {
-    // 0. Reset display element.
-    while (this.displayBox.firstChild) {
-      this.displayBox.removeChild(this.displayBox.firstChild);
-    }
-
-    // 1. Lock form
-    document.querySelectorAll('textarea, #submit').forEach(function(el) {
-      el.setAttribute('disabled', 'disabled');
-    });
-
-    // 2. Add spinner to indicate loading
-    let loader = document.createElement('div');
-    loader.classList.add('loader');
-    document.querySelector('.right').appendChild(loader);
-
-    // 3. Parse the input early, complain if not JSON.
-    let input = document.getElementById('input').value;
-    try {
-      var obj = JSON.parse(input);
-    } catch(e) {
-      // TODO: Display error
-      this.displayError("Invalid JSON: " + e.message);
-      this.reset();
-      return;
-    }
-
-    try {
-      // 4. Perform 3DS Method
-      var trxId = await this.preauthCall(obj);
-
-      // 5. Parse form
-      let FD = this.createForm(trxId, obj);
-
-      // 6. Submit form
-      let response = await this.submitFormData(FD);
-
-      // 7. Handle response
-      let parsed = this.parseAuthResponse(response);
-      if (!parsed.hasOwnProperty('transStatus') || parsed.transStatus != "C") {
-        this.reset();
-        document.querySelector('.right')
-          .appendChild(this.prettyJSON(parsed));
-        return;
-      }
-
-      // 8. Create challenge iframe
-      let creq = this.buildCReq(parsed);
-
-      let rreq = this.postCReq(parsed.acsURL, creq);
-
-      // 9. Poll for challenge completion
-      this.reset();
-    } catch(e) {
-      if (typeof e === "string") {
-        this.displayError(e);
-      } else if (e instanceof XHRError) {
-        this.setError(e.message, e.details);
-      } else {
-        // Object? SyntaxError?
-        if (e.hasOwnProperty('message')) {
-          this.displayError(e.message);
-        } else {
-          this.displayError(e);
-          console.log(e);
-        }
-      }
-
-      this.reset();
-      return
-    }
-  }
-
   preauthCall(obj) {
     return new Promise(function(resolve, reject) {
       if (!obj.hasOwnProperty('acctNumber')) {
@@ -208,7 +226,7 @@ class Flow {
           return
         }
 
-        resolve(preauth.threeDSServerTransID);
+        resolve(preauth);
         return
       });
 
@@ -222,7 +240,39 @@ class Flow {
         return
       });
 
-      XHR.open('POST', "/3dsmethod");
+      XHR.open('POST', "/preauth");
+
+      XHR.send(FD);
+    });
+  }
+
+  doPost(url, FD) {
+    return new Promise(function(resolve, reject) {
+      let XHR = new XMLHttpRequest();
+
+      XHR.addEventListener('load', function(e) {
+        if (XHR.status != 200) {
+          reject(new Error(
+            "Invalid response code " + XHR.status + ": " + XHR.responseText)
+          );
+          return
+        }
+
+        resolve(XHR.responseText);
+        return
+      });
+
+      XHR.addEventListener('error', function(e) {
+        reject(e);
+        return
+      });
+
+      XHR.addEventListener('timeout', function(e) {
+        reject(e);
+        return
+      });
+
+      XHR.open('POST', url);
 
       XHR.send(FD);
     });
@@ -259,8 +309,101 @@ class Flow {
     return obj;
   }
 
-  createForm(trxID, obj) {
+  do3DSMethod(threeDSServerTransID, threeDSMethodURL) {
+    let iframe = document.createElement('iframe');
+    iframe.name = "threeDSMethod";
+    iframe.height = "0";
+    iframe.width = "0";
+    this.displayBox.appendChild(iframe);
+
+    let url = new URL(window.location.origin);
+    url.pathname = '/3dsmethod/end';
+
+    let payload = btoa(JSON.stringify({
+      threeDSServerTransID: threeDSServerTransID,
+      threeDSMethodNotificationURL: url.toString()
+    }));
+
+    let input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'threeDSMethodData';
+    input.value = payload;
+
+
+    let form = document.createElement('form');
+
+    form.method = 'post';
+    form.target = 'threeDSMethod';
+    form.action = threeDSMethodURL;
+
+    form.appendChild(input);
+
+    this.displayBox.appendChild(form);
+
+    form.submit();
+  }
+
+  async waitFor3DSMethod(threeDSServerTransID) {
+    let start = Date.now()
+    await this.sleep(1000);
+
+    for (let i = 1000; i < 10000; i += 1000) {
+      console.log(i);
+      let resp = await this.pollFor3DSMethodCompletion(threeDSServerTransID);
+      if (resp == "true") {
+        return "Y";
+      }
+
+      await this.sleep(1000);
+    }
+
+    return "N";
+  }
+
+  async pollFor3DSMethodCompletion(threeDSServerTransID) {
+    return new Promise(function(resolve, reject) {
+      let XHR = new XMLHttpRequest();
+
+      XHR.addEventListener('load', function() {
+        if (XHR.status != 200) {
+          reject(new Error(
+            "Invalid response code " + XHR.status + ": " + XHR.responseText
+          ));
+          return;
+        }
+
+        resolve(XHR.responseText);
+        return;
+      });
+
+      XHR.addEventListener('error', function(e) {
+        reject(e);
+        return
+      });
+
+      XHR.addEventListener('timeout', function(e) {
+        reject(e);
+        return
+      });
+
+      let url = new URL(window.location.origin);
+      url.pathname = '/3dsmethod/wait';
+      url.searchParams.set('threeDSServerTransID', threeDSServerTransID);
+      XHR.open('GET', url);
+      XHR.send();
+    });
+  }
+
+  async sleep(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds))
+  }
+
+
+  createForm(trxID, threeDSCompInd, obj) {
     obj.threeDSServerTransID = trxID;
+    obj.threeDSCompInd = threeDSCompInd;
+
+
     let asString = JSON.stringify(obj);
     let FD = new FormData();
 
