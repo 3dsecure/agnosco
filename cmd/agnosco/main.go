@@ -18,10 +18,21 @@ import (
 )
 
 var (
-	port   = kingpin.Flag("port", "TCP port to listen to").Short('p').Default("9398").Int()
-	apiKey = kingpin.Flag("apikey", "3dsecure.io API key").Short('k').String()
+	port = kingpin.
+		Flag("port", "TCP port to listen to").
+		Short('p').
+		Default("9398").
+		Int()
 
-	env = kingpin.Flag("env", "3dsecure.io environment to use").Short('e').Default("sandbox").String()
+	apiKey = kingpin.
+		Flag("apikey", "3dsecure.io API key").
+		Short('k').
+		String()
+
+	url = kingpin.
+		Flag("url", "3dsecure.io host to use").
+		Short('u').Default("https://service.sandbox.3dsecure.io").
+		String()
 
 	threeDSMethodMap = sync.Map{}
 )
@@ -228,19 +239,13 @@ func challengeEndHandler(ctx *gin.Context) {
 }
 
 func edssURL(method APIMethod) (base string) {
-	if *env == "production" {
-		base = "https://service.3dsecure.io"
-	} else {
-		base = fmt.Sprintf("https://service.%s.3dsecure.io", *env)
-	}
-
 	switch method {
 	case MethodPreAuth:
-		base += "/preauth"
+		base = *url + "/preauth"
 	case MethodAuth:
-		base += "/auth"
+		base = *url + "/auth"
 	case MethodPostAuth:
-		base += "/postauth"
+		base = *url + "/postauth"
 	}
 
 	return
