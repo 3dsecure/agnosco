@@ -49,10 +49,10 @@ const (
 	// MethodPreAuth is the /preauth 3dsecure.io API method
 	MethodPreAuth APIMethod = iota
 
-	// MethodAuth is the /preauth 3dsecure.io API method
+	// MethodAuth is the /auth 3dsecure.io API method
 	MethodAuth
 
-	// MethodPostAuth is the /preauth 3dsecure.io API method
+	// MethodPostAuth is the /postauth 3dsecure.io API method
 	MethodPostAuth
 )
 
@@ -191,7 +191,7 @@ func challengeEndHandler(ctx *gin.Context) {
 	}
 
 	messageType, ok := getString(M, "messageType")
-	if e != nil {
+	if !ok {
 		ctx.String(http.StatusBadRequest, "No messageType in returned JSON: %s", cresJSON)
 		return
 	}
