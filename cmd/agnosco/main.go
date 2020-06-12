@@ -223,12 +223,19 @@ func challengeEndHandler(ctx *gin.Context) {
 	}
 
 	var rreq []byte
-	if contains([]string{"Y", "A"}, transStatus) {
+	if contains([]string{"Y", "A", "N"}, transStatus) {
 		rreq, e = fetchRReq(threeDSServerTransID)
 		if e != nil {
 			output["Erro"] = fmt.Sprintf("Error fetching RReq: %s", e.Error())
 		} else {
-			output["RReq"] = rreq
+
+			rreqMap := make(map[string]interface{})
+			e = json.Unmarshal(rreq, &rreqMap)
+			if e != nil {
+				panic(e.Error())
+			}
+
+			output["RReq"] = rreqMap
 		}
 
 		fmt.Printf("%s\n", rreq)
