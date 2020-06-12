@@ -1,7 +1,6 @@
 /*
  * TODO:
  *  - Set threeDSCompInd
- *  - Set notificationURL
  *  - Progress checklist
  *  - Error styling
  *  - Challenge window styling
@@ -58,6 +57,8 @@ class Flow {
     try {
       // 4. Perform 3DS Method
       let carddata = await this.preauthCall(obj);
+      console.log("CRD:", carddata);
+
       let trxId = carddata.threeDSServerTransID;
 
       let threeDSCompInd = "U";
@@ -86,7 +87,8 @@ class Flow {
       // 8. Create challenge iframe
       let creq = this.buildCReq(parsed);
 
-      let rreq = this.postCReq(parsed.acsURL, creq);
+      console.log("CReq:", creq);
+      this.postCReq(parsed.acsURL, creq);
 
       // 9. Poll for challenge completion
       this.reset();
@@ -144,7 +146,6 @@ class Flow {
   */
   buildCReq(ares) {
     let creq = {
-      notificationURL: "http://localhost:8270/missing",
       threeDSServerTransID: ares.threeDSServerTransID,
       acsTransID: ares.acsTransID,
       dsTransID: ares.dsTransID,
@@ -172,8 +173,6 @@ class Flow {
     form.target = 'challenge';
     form.method = 'post';
     form.submit();
-
-    //return this.doPost(url, FD);
   }
 
   displayError(msg) {
@@ -224,6 +223,12 @@ class Flow {
         } catch(e) {
           reject(e);
           return
+        }
+
+        if (preauth.hasOwnProperty('messageType') && preauth.messageType == 'Erro') {
+          reject(
+            new XHRError("Return code " + XHR.status, XHR.responseText)
+          );
         }
 
         resolve(preauth);
