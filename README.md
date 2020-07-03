@@ -5,7 +5,7 @@ Agnosco is a demo application and testing tool for the 3dsecure.io 3-D Secure se
 To use it, you have to clone the repository, go to the cloned folder and start it using:
 
 ```bash
-go run github.com/3dsecure/agnosco/cmd/agnosco -e sandbox -k ${APIKEY}
+go run github.com/3dsecure/agnosco/cmd/agnosco -u https://service.sandbox.3dsecure.io -k ${APIKEY}
 ```
 
 ### Setting up for TLS locally
@@ -30,7 +30,7 @@ You should likely also add `YOURLOCALHOSTDNSNAME` as the `CNAME`.
 When this is set up, start it as:
 
 ```bash
-go run github.com/3dsecure/agnosco/cmd/agnosco -e sandbox -k ${APIKEY} --cert cert.pem --key key.pem
+go run github.com/3dsecure/agnosco/cmd/agnosco -u https://service.sandbox.3dsecure.io -k ${APIKEY} --cert cert.pem --key key.pem
 ```
 
 ### Work in progress
