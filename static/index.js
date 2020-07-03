@@ -407,6 +407,9 @@ class Flow {
     obj.threeDSServerTransID = trxID;
     obj.threeDSCompInd = threeDSCompInd;
 
+    let url = new URL(window.location.origin);
+    url.pathname = '/challenge/end';
+    obj.notificationURL = url.toString();
 
     let asString = JSON.stringify(obj);
     let FD = new FormData();
