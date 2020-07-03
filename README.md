@@ -39,7 +39,7 @@ Please note, Agnosco is still a work in progress.
 
 What needs to be done:
 
-- The 3DSMethod has not been implemented
 - Proper display and interpretation of challenge results
 - Handling the final challenge callback
+- Prettier input handling
 - ...
