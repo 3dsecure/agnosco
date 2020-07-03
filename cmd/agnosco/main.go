@@ -1,13 +1,16 @@
 package main
 
 import (
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
-
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -34,6 +37,14 @@ var (
 		Short('u').Default("https://service.sandbox.3dsecure.io").
 		String()
 
+	tlsCert = kingpin.
+		Flag("cert", "TLS Certificate to use for HTTPS").
+		String()
+
+	tlsKey = kingpin.
+		Flag("key", "TLS key to use for HTTPS").
+		String()
+
 	threeDSMethodMap = sync.Map{}
 )
 
@@ -57,6 +68,8 @@ const (
 )
 
 func main() {
+	var e error
+
 	kingpin.Parse()
 
 	gin.SetMode(gin.ReleaseMode)
@@ -80,9 +93,34 @@ func main() {
 	router.POST("/challenge/end", challengeEndHandler)
 
 	address := fmt.Sprintf("localhost:%d", *port)
-	fmt.Printf("Connect to http://%s\n", address)
 
-	router.Run(address)
+	if *tlsCert != "" && *tlsKey != "" {
+		startTLS(router, address)
+	} else {
+		fmt.Printf("Connect to http://%s\n", address)
+		e = router.Run(address)
+	}
+
+	fmt.Printf("Error running webserver: %s\n", e.Error())
+}
+
+func startTLS(router *gin.Engine, address string) (e error) {
+	names, e := getDNSSAN(*tlsCert)
+	if e != nil {
+		return
+	}
+
+	portString := strconv.Itoa(*port)
+	for _, name := range names {
+		fmt.Printf("Connect to https://%s\n", net.JoinHostPort(name, portString))
+	}
+	e = router.RunTLS(
+		address,
+		*tlsCert,
+		*tlsKey,
+	)
+
+	return
 }
 
 func indexHandler(ctx *gin.Context) {
@@ -324,4 +362,19 @@ func contains(list []string, value string) bool {
 	}
 
 	return false
+}
+
+func getDNSSAN(filename string) (dnsNames []string, e error) {
+	certPEM, e := ioutil.ReadFile(filename)
+	if e != nil {
+		return
+	}
+
+	block, _ := pem.Decode(certPEM)
+
+	cert, e := x509.ParseCertificate(block.Bytes)
+
+	dnsNames = cert.DNSNames
+
+	return
 }
