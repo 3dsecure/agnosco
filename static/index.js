@@ -198,10 +198,13 @@ class Flow {
         reject('Missing acctNumber');
         return
       }
+      var req_json = { "acctNumber": obj.acctNumber };
 
-      let req = JSON.stringify({
-        "acctNumber": obj.acctNumber
-      });
+      if (obj.hasOwnProperty('ds')) {
+        req_json.ds = obj.ds;
+      }
+
+      let req = JSON.stringify(req_json);
 
       let FD = new FormData();
       FD.append('input', req);
