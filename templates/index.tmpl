@@ -30,14 +30,20 @@
             <label for="input">Input JSON:</label>
             <textarea name="areq" id="input" placeholder="Paste AReq here">
 {
-  "acctNumber": "9000100811111111",
+  "acctNumber": "PAN",
+  "cardExpiryDate": "YYMM",
+  "acquirerBIN": "get this from your acquirer; (usually) the same as for 3DSv1",
+  "acquirerMerchantID": "the merchant is enrolled with this value",
+
+  "purchaseAmount": "101",
+  "purchaseCurrency": "840",
+  "purchaseExponent": "2",
+  "purchaseDate": "20210108235959"
+
   "threeDSCompInd": "Y",
   "threeDSRequestorID": "az0123456789",
   "threeDSRequestorName": "Example Requestor name",
   "threeDSRequestorURL": "https://threedsrequestor.adomainname.net",
-  "acquirerBIN": "868491",
-  "acquirerMerchantID": "mGm6AJZ1YotkJJmOk0fx",
-  "cardExpiryDate": "1910",
   "billAddrCity": "Bill City Name",
   "billAddrCountry": "840",
   "billAddrLine1": "Bill Address Line 1",
@@ -72,10 +78,6 @@
   "messageCategory": "01",
   "messageType": "AReq",
   "messageVersion": "2.1.0",
-  "purchaseAmount": "101",
-  "purchaseCurrency": "840",
-  "purchaseExponent": "2",
-  "purchaseDate": "20170316141312"
 }
             </textarea>
           </div>
