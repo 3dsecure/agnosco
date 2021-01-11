@@ -92,7 +92,7 @@ func main() {
 
 	router.POST("/challenge/end", challengeEndHandler)
 
-	address := fmt.Sprintf("localhost:%d", *port)
+	address := fmt.Sprintf("0.0.0.0:%d", *port)
 
 	if *tlsCert != "" && *tlsKey != "" {
 		startTLS(router, address)
