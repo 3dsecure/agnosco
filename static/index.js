@@ -6,6 +6,15 @@
  *  - Challenge window styling
  */
 
+function base64URL(string) {
+  str = btoa(string).
+        replaceAll('+', '-').
+        replaceAll('/', '_').
+        replaceAll('=', '');
+
+  return str;
+}
+
 class XHRError extends Error {
   constructor(message, details) {
     super(message);
@@ -167,7 +176,7 @@ class Flow {
 
     let form = document.getElementById('challengeForm');
     let creqInput = document.getElementById('creq');
-    creqInput.value = btoa(creq);
+    creqInput.value = base64URL(creq);
 
     form.action = url;
     form.target = 'challenge';
@@ -327,7 +336,7 @@ class Flow {
     let url = new URL(window.location.origin);
     url.pathname = '/3dsmethod/end';
 
-    let payload = btoa(JSON.stringify({
+    let payload = base64URL(JSON.stringify({
       threeDSServerTransID: threeDSServerTransID,
       threeDSMethodNotificationURL: url.toString()
     }));
@@ -409,6 +418,15 @@ class Flow {
   createForm(trxID, threeDSCompInd, obj) {
     obj.threeDSServerTransID = trxID;
     obj.threeDSCompInd = threeDSCompInd;
+
+    obj.browserJavaEnabled = navigator.javaEnabled()
+    obj.browserJavascriptEnabled = true
+    obj.browserLanguage = navigator.language
+    obj.browserColorDepth = screen.colorDepth.toString()
+    obj.browserScreenHeight = screen.height.toString()
+    obj.browserScreenWidth = screen.width.toString()
+    obj.browserTZ = new Date().getTimezoneOffset().toString()
+    obj.browserUserAgent = navigator.userAgent
 
     let url = new URL(window.location.origin);
     url.pathname = '/challenge/end';

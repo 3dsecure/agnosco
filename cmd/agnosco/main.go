@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -195,7 +196,21 @@ func submitHandler(ctx *gin.Context) {
 		return
 	}
 
-	body, e := apiCall(MethodAuth, input)
+	m := make(map[string]interface{})
+
+	e := json.Unmarshal([]byte(input), &m)
+	if e != nil {
+		ctx.String(http.StatusInternalServerError, e.Error())
+	}
+
+	ip, _, _ := net.SplitHostPort(ctx.Request.RemoteAddr)
+	m["browserIP"] = ip
+	m["browserAcceptHeader"] = ctx.Request.Header.Get("Accept")
+	m["purchaseDate"] = time.Now().Format("20060102150405")
+
+	inputBytes, _ := json.Marshal(m)
+
+	body, e := apiCall(MethodAuth, string(inputBytes))
 	if e != nil {
 		ctx.String(http.StatusInternalServerError, e.Error())
 	} else {
@@ -307,7 +322,14 @@ func apiCall(method APIMethod, input string) (response string, e error) {
 	req.Header.Add("Content-Type", "application/json; charset=utf-8")
 	req.Header.Add("APIKey", *apiKey)
 
-	resp, e := http.DefaultClient.Do(req)
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		},
+	}
+	resp, e := client.Do(req)
 	if e != nil {
 		return
 	}
@@ -319,7 +341,7 @@ func apiCall(method APIMethod, input string) (response string, e error) {
 	}
 
 	if resp.StatusCode != 200 {
-		e = fmt.Errorf("Invalid response code %d from 3dsecure.io: %s", resp.StatusCode, respBody)
+		e = fmt.Errorf("invalid response code %d from 3dsecure.io: %s", resp.StatusCode, respBody)
 		return
 	}
 
