@@ -56,7 +56,7 @@ echo "Browse https://agnosco.3dsecure.io:${port}"
 
 ### 3DSv2 authentication flow
 
-Browse `https://agnosco.3dsecure.io:${port}` as outputted above, replace the
+Browse `https://agnosco.3dsecure.io:${port}` as printed above, replace the
 first few values of the presented AReq and press Submit.
 
 
