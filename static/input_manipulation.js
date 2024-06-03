@@ -1,4 +1,3 @@
-const process = require('process');
 let jsonInput = {}
 
 function setVersion(version) {
@@ -55,7 +54,6 @@ function setTextArea() {
 }
 
 function prettifyJson() {
-  console.log(process.env.url);
   parseInput();
   setTextArea();
 }
