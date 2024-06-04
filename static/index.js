@@ -95,12 +95,6 @@ class Flow {
 
       // 8. Create challenge iframe
       let creq = this.buildCReq(parsed);
-      // Convert https to http if url contains secure.localhost
-      //if (parsed.acsURL.includes('secure.localhost')) {
-      //#  console.log("Converting to http");
-      //parsed.acsURL = parsed.acsURL.replace('https', 'http');
-      //}
-      console.log("ACS:", parsed.acsURL);
       console.log("CReq:", creq);
       this.postCReq(parsed.acsURL, creq);
 
