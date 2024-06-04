@@ -115,6 +115,33 @@ form > button {
     margin: 10px 0;
 }
 
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.table {
+	display: flex;
+	flex-direction: column;
+	border-collapse: collapse;
+	width: 100%;
+	max-width: 600px;
+	/* Adjust as needed */
+	margin-bottom: 20px;
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid #ccc;
+}
+
+.cell {
+	flex: 1;
+	padding: 10px;
+	text-align: center;
+}
 
 .input-group {
   box-sizing: border-box;
