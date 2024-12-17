@@ -1,0 +1,17 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: agnosco
+  description: Demo application and testing tool for the 3dsecure.io 3-D Secure
+    Server
+  tags:
+    - confidentiality:public
+    - integrity:integrity-neutral
+    - availability:standard
+    - pci-dss:no
+spec:
+  type: service
+  lifecycle: production
+  owner: AEP
+  system: clearhaus
