@@ -422,7 +422,15 @@ class Flow {
     obj.browserJavaEnabled = navigator.javaEnabled()
     obj.browserJavascriptEnabled = true
     obj.browserLanguage = navigator.language
+
     obj.browserColorDepth = screen.colorDepth.toString()
+    if (![1, 4, 8, 15, 16, 24, 32, 48].includes(screen.colorDepth)) {
+      // Only the above color depths are allowed in the EMVCo spec.
+      // If we receive something else (e.g. 30 on macOS), we have to fake it.
+      console.log(`Color depth is ${screen.colorDepth}, faking it to 24`);
+      obj.browserColorDepth = "24"
+    }
+
     obj.browserScreenHeight = screen.height.toString()
     obj.browserScreenWidth = screen.width.toString()
     obj.browserTZ = new Date().getTimezoneOffset().toString()
