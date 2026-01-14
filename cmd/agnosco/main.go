@@ -206,6 +206,7 @@ func submitHandler(ctx *gin.Context) {
 	ip, _, _ := net.SplitHostPort(ctx.Request.RemoteAddr)
 	m["browserIP"] = ip
 	m["browserAcceptHeader"] = ctx.Request.Header.Get("Accept")
+	m["acceptLanguage"] = []string{ctx.Request.Header.Get("Accept-Language")}
 	m["purchaseDate"] = time.Now().Format("20060102150405")
 
 	inputBytes, _ := json.Marshal(m)
