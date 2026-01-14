@@ -10,10 +10,11 @@
       href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.17.1/build/styles/default.min.css">
   <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.17.1/build/highlight.min.js"></script>
   <script src="/static/index.js"></script>
+  <script src="/static/input_manipulation.js"></script>
 
   <title>Agnosco - 3dsecure.io demo application</title>
 </head>
-<body>
+<body onload="prettifyJson()">
   <main>
     <h2>Agnosco - 3dsecure.io</h2>
     <br/>
@@ -30,7 +31,7 @@
             <label for="input">Input JSON:</label>
             <textarea name="areq" id="input" placeholder="Paste AReq here">
 {
-  "acctNumber": "9000100811111111",
+  "acctNumber": "3000100811113072",
   "cardExpiryDate": "1910",
 
   "acquirerBIN": "868491",
@@ -40,7 +41,7 @@
   "merchantName": "Dummy Merchant",
 
   "messageType": "AReq",
-  "messageVersion": "2.1.0",
+  "messageVersion": "2.3.1",
   "messageCategory": "01",
   "deviceChannel": "02",
   "transType": "01",
@@ -78,6 +79,59 @@
 
           <button id="submit" class="submit" type="submit">Submit</button>
         </form>
+				<div class="container">
+        <h3>Sandbox mode:</h3>
+        <div class="table">
+            <div class="row">
+                <div class="cell">Version</div>
+                <div class="cell">Method</div>
+                <div class="cell">ARes transStatus</div>
+                <div class="cell">Challengeflow</div>
+            </div>
+            <div class="row">
+                <div class="cell"><button class="button" onclick="setVersion('0')">All version supported</button></div>
+                <div class="cell"><button class="button" onclick="set3DSMethod('0')">With 3DS method included</button></div>
+                <div class="cell"><button class="button" onclick="setAresStatus('0')">Y</button></div>
+                <div class="cell"><button class="button" onclick="setChallengeFlowOutcome('2')">Manual</button></div>
+            </div>
+            <div class="row">
+                <div class="cell"><button class="button" onclick="setVersion('1')">2.1.0</button></div>
+                <div class="cell"><button class="button" onclick="set3DSMethod('1')">With 3DS method missing</button></div>
+                <div class="cell"><button class="button" onclick="setAresStatus('1')">N</button></div>
+                <div class="cell"><button class="button" onclick="setChallengeFlowOutcome('0')">Automatically passes</button></div>
+            </div>
+            <div class="row">
+                <div class="cell"><button class="button" onclick="setVersion('2')">2.2.0</button></div>
+                <div class="cell"><button class="button" onclick="set3DSMethod('2')">With 3DS method timeout</button></div>
+                <div class="cell"><button class="button" onclick="setAresStatus('2')">A</button></div>
+                <div class="cell"><button class="button" onclick="setChallengeFlowOutcome('2')">Automatically fails</button></div>
+            </div>
+            <div class="row">
+                <div class="cell"><button class="button" onclick="setVersion('3')">2.3.1.1</button></div>
+                <div class="cell"></div>
+                <div class="cell"><button class="button" onclick="setAresStatus('3')">R</button></div>
+                <div class="cell"></div>
+            </div>
+            <div class="row">
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"><button class="button" onclick="setAresStatus('4')">I</button></div>
+                <div class="cell"></div>
+            </div>
+            <div class="row">
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"><button class="button" onclick="setAresStatus('5')">U</button></div>
+                <div class="cell"></div>
+            </div>
+            <div class="row">
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"><button class="button" onclick="setAresStatus('6')">DS timeout</button></div>
+                <div class="cell"></div>
+            </div>
+        </div>
+    		</div>
       </div>
       <div class="right"></div>
     </div>

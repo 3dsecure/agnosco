@@ -95,7 +95,6 @@ class Flow {
 
       // 8. Create challenge iframe
       let creq = this.buildCReq(parsed);
-
       console.log("CReq:", creq);
       this.postCReq(parsed.acsURL, creq);
 
