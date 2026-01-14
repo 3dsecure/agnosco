@@ -22,7 +22,7 @@ function setAresStatus(status) {
   acctNumber = acctNumber.slice(0, -2) + status + acctNumber.slice(-1);
   jsonInput.acctNumber = acctNumber;
   setTextArea();
-  if (status < 7) {
+  if (status < '7') {
     setChallengeFlowOutcome('3');
   }
 }
