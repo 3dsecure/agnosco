@@ -206,7 +206,7 @@ func submitHandler(ctx *gin.Context) {
 	ip, _, _ := net.SplitHostPort(ctx.Request.RemoteAddr)
 	m["browserIP"] = ip
 	m["browserAcceptHeader"] = ctx.Request.Header.Get("Accept")
-	m["acceptLanguage"] = []string{ctx.Request.Header.Get("Accept-Language")}
+	m["acceptLanguage"] = parseAcceptLanguage(ctx.Request.Header.Get("Accept-Language"))
 	m["purchaseDate"] = time.Now().Format("20060102150405")
 
 	inputBytes, _ := json.Marshal(m)
@@ -385,6 +385,24 @@ func contains(list []string, value string) bool {
 	}
 
 	return false
+}
+
+// parseAcceptLanguage parses an Accept-Language header value like
+// "en-US,en;q=0.9,da-DK;q=0.8" into a slice of language tags ["en-US", "en", "da-DK"]
+func parseAcceptLanguage(header string) []string {
+	if header == "" {
+		return []string{}
+	}
+
+	var languages []string
+	for _, part := range strings.Split(header, ",") {
+		// Split on semicolon to remove quality value (e.g., ";q=0.9")
+		lang := strings.TrimSpace(strings.Split(part, ";")[0])
+		if lang != "" {
+			languages = append(languages, lang)
+		}
+	}
+	return languages
 }
 
 func getDNSSAN(filename string) (dnsNames []string, e error) {
