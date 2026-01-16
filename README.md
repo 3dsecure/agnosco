@@ -43,20 +43,16 @@ it for SSL/TLS, either in a specific browser or system-wide.
 ### Start the docker container
 
 ```bash
-docker run --rm -d -P \
+docker run --rm -d -p 9398:9398 \
   --name agnosco 3dsecure/agnosco \
   --cert static/agnosco.3dsecure.io-cert.pem \
   --key static/agnosco.3dsecure.io-key.pem \
   -k 'your api key for ...' -u 'https://service.3dsecure.io'
-
-port=$(docker inspect --format='{{(index (index .NetworkSettings.Ports "9398/tcp") 0).HostPort}}' agnosco)
-
-echo "Browse https://agnosco.3dsecure.io:${port}"
 ```
 
 ### 3DSv2 authentication flow
 
-Browse `https://agnosco.3dsecure.io:${port}` as printed above, replace the
+Browse `https://agnosco.3dsecure.io:9398`, replace the
 first few values of the presented AReq and press Submit.
 
 
