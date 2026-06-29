@@ -1,3 +1,85 @@
+const browserExample = {
+  acctNumber: "3000100811113072",
+  cardExpiryDate: "1910",
+  acquirerBIN: "868491",
+  acquirerMerchantID: "mGm6AJZ1YotkJJmOk0fx",
+  acquirerCountryCode: "208",
+  acquirerCountryCodeSource: "01",
+  mcc: "5411",
+  merchantCountryCode: "840",
+  merchantName: "Dummy Merchant",
+  messageType: "AReq",
+  messageVersion: "2.3.1",
+  messageCategory: "01",
+  deviceChannel: "02",
+  transType: "01",
+  threeDSRequestorAuthenticationInd: "01",
+  threeDSRequestorID: "az0123456789",
+  threeDSRequestorName: "Example Requestor name",
+  threeDSRequestorURL: "https://threedsrequestor.adomainname.net",
+  purchaseAmount: "101",
+  purchaseCurrency: "840",
+  purchaseExponent: "2",
+  cardholderName: "Cardholder Name",
+  email: "example@example.com",
+  mobilePhone: { cc: "123", subscriber: "123456789" },
+  billAddrCity: "Bill City Name",
+  billAddrCountry: "840",
+  billAddrLine1: "Bill Address Line 1",
+  billAddrPostCode: "Bill Post Code",
+  billAddrState: "CO",
+  shipAddrCity: "Ship City Name",
+  shipAddrCountry: "840",
+  shipAddrLine1: "Ship Address Line 1",
+  shipAddrPostCode: "Ship Post Code",
+  shipAddrState: "CO"
+};
+
+// 3RI (3DS Requestor Initiated), deviceChannel "03". Frictionless only: no
+// browser fields, no threeDSRequestorAuthenticationInd. acquirerCountryCode /
+// acquirerCountryCodeSource are required at 2.3.1. The PAN's last-4 ("3003")
+// encodes version 2.3.1 + frictionless-Full; the sandbox panel rewrites it.
+const threeRIExample = {
+  acctNumber: "5500000000003003",
+  cardExpiryDate: "1910",
+  acquirerBIN: "868491",
+  acquirerMerchantID: "mGm6AJZ1YotkJJmOk0fx",
+  acquirerCountryCode: "208",
+  acquirerCountryCodeSource: "01",
+  mcc: "5411",
+  merchantCountryCode: "840",
+  merchantName: "Dummy Merchant",
+  messageType: "AReq",
+  messageVersion: "2.3.1",
+  messageCategory: "02",
+  deviceChannel: "03",
+  threeRIInd: "03",
+  threeDSRequestorID: "az0123456789",
+  threeDSRequestorName: "Example Requestor name",
+  threeDSRequestorURL: "https://threedsrequestor.example.org",
+  cardholderName: "Cardholder Name",
+  email: "example@example.com",
+  billAddrCity: "Bill City Name",
+  billAddrCountry: "840",
+  billAddrLine1: "Bill Address Line 1",
+  billAddrPostCode: "Bill Post Code",
+  billAddrState: "CO"
+};
+
+function loadExample(name) {
+  jsonInput = name === "3ri" ? threeRIExample : browserExample;
+  setTextArea();
+  updatePanelForChannel();
+}
+
+// Temporary placeholder; replaced by the real implementation in the
+// channel-aware sandbox-panel task.
+function updatePanelForChannel() {}
+
+function init() {
+  loadExample("browser");
+}
+
 let jsonInput = {}
 
 function setVersion(version) {
