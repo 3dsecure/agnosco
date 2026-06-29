@@ -61,19 +61,10 @@ sends `threeDSCompInd: "N"`, which the Directory Server rejects with:
 You will also see a `LocalNetworkAccessDenied` CORS error in the browser
 console, and no `POST /3dsmethod/end` reaching the agnosco log.
 
-The iframe `allow="local-network"` delegation does **not** fix this, because
-the ACS callback is an auto-submitted cross-origin form POST, not a `fetch()`
-— so Chrome neither prompts nor honours the delegation. Allow it at the
-browser level instead. For local testing, disable the LNA check:
+For local testing, disable the LNA check:
 
 1. Open `chrome://flags/#local-network-access-check`.
 2. Set it to **Disabled** and restart Chrome.
-
-For a managed/shared setup, the persistent equivalent is the
-[`LocalNetworkAccessRestrictionsEnabled`](https://chromeenterprise.google/policies/local-network-access-restrictions-enabled/)
-enterprise policy (or origin-scoped
-[`LoopbackNetworkAccessAllowedForUrls`](https://chromeenterprise.google/policies/local-network-access-allowed-for-urls/)
-keyed on the sandbox ACS origins).
 
 ### Start the docker container
 
