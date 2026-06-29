@@ -72,12 +72,26 @@ function loadExample(name) {
   updatePanelForChannel();
 }
 
-// Temporary placeholder; replaced by the real implementation in the
-// channel-aware sandbox-panel task.
-function updatePanelForChannel() {}
+// updatePanelForChannel disables the sandbox controls that are invalid for a
+// frictionless 3RI request (deviceChannel "03"): the 3DS-method column, the
+// challenge-flow column, and the "I" ARes-status button.
+function updatePanelForChannel() {
+  let is3RI = false;
+  try {
+    is3RI = JSON.parse(document.getElementsByName('areq')[0].value).deviceChannel === "03";
+  } catch (e) {
+    is3RI = false;
+  }
+
+  document.querySelectorAll('[data-3ri-disabled]').forEach(function(btn) {
+    btn.disabled = is3RI;
+  });
+}
 
 function init() {
   loadExample("browser");
+  document.getElementsByName('areq')[0]
+    .addEventListener('input', updatePanelForChannel);
 }
 
 let jsonInput = {}
