@@ -55,6 +55,19 @@ docker run --rm -d -p 9398:9398 \
 Browse `https://agnosco.3dsecure.io:9398`, replace the
 first few values of the presented AReq and press Submit.
 
+### 3RI (3DS Requestor Initiated) flow
+
+3RI requests (`deviceChannel` `03`) are merchant-initiated and frictionless —
+there is no browser, no 3DS method, and no challenge. To run one, click
+**Load example: 3RI**, then use the **Sandbox mode** panel to pick a message
+version and a frictionless outcome (`Y`/`N`/`A`/`R`/`U` or DS timeout). The
+3DS-method and Challenge-flow controls (and the `I` status) are disabled for
+3RI because they do not apply.
+
+Behaviour is selected through the last 4 digits of the PAN, the same encoding
+the browser flow uses; the version buttons rewrite the PAN, not the
+`messageVersion` field.
+
 
 ## Generating your own key and certificate
 
