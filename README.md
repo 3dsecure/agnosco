@@ -40,6 +40,41 @@ it for SSL/TLS, either in a specific browser or system-wide.
 * On macOS, you can double-click the certificate to import it in Keychain
   Access, and change trust to be "Always Trust" for SSL.
 
+### First time setup: Chrome Local Network Access
+
+Recent versions of Chrome enforce
+[Local Network Access](https://developer.chrome.com/blog/local-network-access)
+(LNA), which blocks a public website from making requests to your local
+network. During a flow, the ACS pages (served from public origins, in hidden
+iframes) post their results back to agnosco on `127.0.0.1`
+(`/3dsmethod/end` after the 3DS method, `/challenge/end` after a challenge).
+Chrome blocks these public→loopback callbacks.
+
+If the callback is blocked, agnosco never sees the 3DS method complete and
+sends `threeDSCompInd: "N"`, which the Directory Server rejects with:
+
+```
+"errorCode": "305", "errorDescription": "Invalid ThreeDSCompInd",
+"errorDetail": "The threeDSCompInd must be \"Y\" when successful"
+```
+
+You will also see a `LocalNetworkAccessDenied` CORS error in the browser
+console, and no `POST /3dsmethod/end` reaching the agnosco log.
+
+The iframe `allow="local-network"` delegation does **not** fix this, because
+the ACS callback is an auto-submitted cross-origin form POST, not a `fetch()`
+— so Chrome neither prompts nor honours the delegation. Allow it at the
+browser level instead. For local testing, disable the LNA check:
+
+1. Open `chrome://flags/#local-network-access-check`.
+2. Set it to **Disabled** and restart Chrome.
+
+For a managed/shared setup, the persistent equivalent is the
+[`LocalNetworkAccessRestrictionsEnabled`](https://chromeenterprise.google/policies/local-network-access-restrictions-enabled/)
+enterprise policy (or origin-scoped
+[`LoopbackNetworkAccessAllowedForUrls`](https://chromeenterprise.google/policies/local-network-access-allowed-for-urls/)
+keyed on the sandbox ACS origins).
+
 ### Start the docker container
 
 ```bash
