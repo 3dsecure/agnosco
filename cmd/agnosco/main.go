@@ -189,6 +189,19 @@ func threeDSMethodEndHandler(ctx *gin.Context) {
 	threeDSMethodMap.Store(data.ThreeDSServerTransID, compInd)
 }
 
+// enrichAReq adds server-derived fields to a parsed AReq map. purchaseDate is
+// always set; browser-derived fields are added only for the browser device
+// channel ("02"), so frictionless 3RI requests ("03") stay browser-field-free.
+func enrichAReq(m map[string]interface{}, deviceChannel, ip, acceptHeader string, acceptLanguage []string, now time.Time) {
+	m["purchaseDate"] = now.Format("20060102150405")
+
+	if deviceChannel == "02" {
+		m["browserIP"] = ip
+		m["browserAcceptHeader"] = acceptHeader
+		m["acceptLanguage"] = acceptLanguage
+	}
+}
+
 func submitHandler(ctx *gin.Context) {
 	input, ok := ctx.GetPostForm("input")
 	if !ok {
@@ -204,10 +217,15 @@ func submitHandler(ctx *gin.Context) {
 	}
 
 	ip, _, _ := net.SplitHostPort(ctx.Request.RemoteAddr)
-	m["browserIP"] = ip
-	m["browserAcceptHeader"] = ctx.Request.Header.Get("Accept")
-	m["acceptLanguage"] = parseAcceptLanguage(ctx.Request.Header.Get("Accept-Language"))
-	m["purchaseDate"] = time.Now().Format("20060102150405")
+	deviceChannel, _ := m["deviceChannel"].(string)
+	enrichAReq(
+		m,
+		deviceChannel,
+		ip,
+		ctx.Request.Header.Get("Accept"),
+		parseAcceptLanguage(ctx.Request.Header.Get("Accept-Language")),
+		time.Now(),
+	)
 
 	inputBytes, _ := json.Marshal(m)
 
