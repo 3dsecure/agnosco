@@ -148,9 +148,3 @@ function setTextArea() {
   var textarea = document.getElementsByName('areq')[0];
   textarea.value = JSON.stringify(jsonInput, null, 2);
 }
-
-function prettifyJson() {
-  parseInput();
-  setTextArea();
-}
-
