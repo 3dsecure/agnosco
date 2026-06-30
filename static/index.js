@@ -416,35 +416,40 @@ class Flow {
 
   createForm(trxID, threeDSCompInd, obj) {
     obj.threeDSServerTransID = trxID;
-    obj.threeDSCompInd = threeDSCompInd;
 
-    obj.browserJavaEnabled = navigator.javaEnabled()
-    obj.browserJavascriptEnabled = true
-    obj.browserLanguage = navigator.language
+    // Browser-only fields. 3RI (deviceChannel "03") is frictionless and must
+    // not carry browser data, threeDSCompInd, or a challenge notificationURL.
+    if (obj.deviceChannel === "02") {
+      obj.threeDSCompInd = threeDSCompInd;
 
-    obj.browserColorDepth = screen.colorDepth.toString()
-    if (![1, 4, 8, 15, 16, 24, 32, 48].includes(screen.colorDepth)) {
-      // Only the above color depths are allowed in the EMVCo spec.
-      // If we receive something else (e.g. 30 on macOS), we have to fake it.
-      console.log(`Color depth is ${screen.colorDepth}, faking it to 24`);
-      obj.browserColorDepth = "24"
+      obj.browserJavaEnabled = navigator.javaEnabled();
+      obj.browserJavascriptEnabled = true;
+      obj.browserLanguage = navigator.language;
+
+      obj.browserColorDepth = screen.colorDepth.toString();
+      if (![1, 4, 8, 15, 16, 24, 32, 48].includes(screen.colorDepth)) {
+        // Only the above color depths are allowed in the EMVCo spec.
+        // If we receive something else (e.g. 30 on macOS), we have to fake it.
+        console.log(`Color depth is ${screen.colorDepth}, faking it to 24`);
+        obj.browserColorDepth = "24";
+      }
+
+      obj.browserScreenHeight = screen.height.toString();
+      obj.browserScreenWidth = screen.width.toString();
+      obj.browserTZ = new Date().getTimezoneOffset().toString();
+      obj.browserUserAgent = navigator.userAgent;
+
+      let url = new URL(window.location.origin);
+      url.pathname = '/challenge/end';
+      obj.notificationURL = url.toString();
     }
-
-    obj.browserScreenHeight = screen.height.toString()
-    obj.browserScreenWidth = screen.width.toString()
-    obj.browserTZ = new Date().getTimezoneOffset().toString()
-    obj.browserUserAgent = navigator.userAgent
-
-    let url = new URL(window.location.origin);
-    url.pathname = '/challenge/end';
-    obj.notificationURL = url.toString();
 
     let asString = JSON.stringify(obj);
     let FD = new FormData();
 
-    FD.append('input', asString)
+    FD.append('input', asString);
 
-    return FD
+    return FD;
   }
 
   submitFormData(FD) {

@@ -194,3 +194,8 @@ form > button {
   font-size: 1.2em;
   border-radius: 0px 0px 14px 14px;
 }
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
