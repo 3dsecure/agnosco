@@ -7,10 +7,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,7 +19,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin/v2"
 )
 
 var (
@@ -336,7 +337,7 @@ func apiCall(method APIMethod, input string) (response string, e error) {
 	}
 	defer resp.Body.Close()
 
-	respBody, e := ioutil.ReadAll(resp.Body)
+	respBody, e := io.ReadAll(resp.Body)
 	if e != nil {
 		return
 	}
@@ -406,7 +407,7 @@ func parseAcceptLanguage(header string) []string {
 }
 
 func getDNSSAN(filename string) (dnsNames []string, e error) {
-	certPEM, e := ioutil.ReadFile(filename)
+	certPEM, e := os.ReadFile(filename)
 	if e != nil {
 		return
 	}
