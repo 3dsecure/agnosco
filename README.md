@@ -40,11 +40,19 @@ it for SSL/TLS, either in a specific browser or system-wide.
 * On macOS, you can double-click the certificate to import it in Keychain
   Access, and change trust to be "Always Trust" for SSL.
 
+### First time setup: Docker image
+
+The image is not published to Docker Hub, so build it from this repository:
+
+```bash
+docker build -t agnosco .
+```
+
 ### Start the docker container
 
 ```bash
 docker run --rm -d -p 9398:9398 \
-  --name agnosco 3dsecure/agnosco \
+  --name agnosco agnosco \
   --cert static/agnosco.3dsecure.io-cert.pem \
   --key static/agnosco.3dsecure.io-key.pem \
   -k 'your api key for ...' -u 'https://service.3dsecure.io'
